@@ -11,5 +11,5 @@ import team.lodestar.alkahest.common.block.mortar.MortarBlock;
 public class BlockRegistration {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Alkahest.MODID);
 
-    public static final RegistryObject<Block> MORTAR = BLOCKS.register("mortar", () -> new MortarBlock(Block.Properties.of(Material.STONE)));
+    public static final RegistryObject<Block> MORTAR = BLOCKS.register("mortar", () -> new MortarBlock<>(Block.Properties.of(Material.STONE)).setBlockEntity(BlockEntityRegistration.MORTAR));
 }

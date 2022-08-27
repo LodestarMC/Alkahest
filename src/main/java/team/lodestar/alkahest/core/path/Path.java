@@ -49,7 +49,7 @@ public class Path {
             for(int i = 0; i < directions.size(); i++){
                 CompoundTag directionCompound = new CompoundTag();
                 directionCompound.putString(Integer.toString(i), directions.get(i).getName().toLowerCase(Locale.ROOT));
-                dir.add(directionCompound);
+                dir.add(i, directionCompound);
             }
             CompoundTag dirTag = new CompoundTag();
             dirTag.put("directions", dir);
@@ -68,7 +68,8 @@ public class Path {
             List<Direction> directions = new ArrayList<>();
             ListTag dir = dirTag.getList("directions", 10);
             for (int j = 0; j < dir.size(); j++) {
-                directions.add(Direction.byName(dir.getCompound(j).getString(Integer.toString(j))));
+                CompoundTag directionCompound = (CompoundTag) dir.get(j);
+                directions.add(Direction.byName(directionCompound.getString(Integer.toString(j))));
             }
             path.add(directions, dirTag.getFloat("progress"));
         }

@@ -1,6 +1,8 @@
 package team.lodestar.alkahest.common.block.mortar;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -15,6 +17,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.Tags;
 import org.jetbrains.annotations.Nullable;
 import team.lodestar.alkahest.Alkahest;
+import team.lodestar.alkahest.core.listeners.ItemPathDataListener;
+import team.lodestar.alkahest.core.path.Path;
 import team.lodestar.alkahest.core.recipe.MortarRecipe;
 import team.lodestar.alkahest.registry.common.BlockEntityRegistration;
 import team.lodestar.alkahest.registry.common.ItemRegistration;
@@ -90,10 +94,23 @@ public class MortarBlockEntity extends ItemHolderBlockEntity {
     public void addPercentage(ItemStack stack){
         if(stack.is(ItemTagRegistry.CRUSHABLES)){
             ItemStack crushedStack = stack.is(ItemRegistration.GENERIC_CRUSHED.get()) ? stack : new ItemStack(ItemRegistration.GENERIC_CRUSHED.get(), stack.getCount());
-            int crushedAmount = stack.is(ItemRegistration.GENERIC_CRUSHED.get()) ? Math.min(stack.getTag().getInt("crush") + 1, 100) : 1;
+            int crushedAmount = stack.is(ItemRegistration.GENERIC_CRUSHED.get()) ? Math.min(stack.getTag().getInt("crush") + 1, 100) : 0;
             crushedStack.getOrCreateTag().putInt("crush", crushedAmount);
+            if(stack.hasTag() && stack.is(ItemRegistration.GENERIC_CRUSHED.get())){
+                if(stack.getOrCreateTag().get("path") != null){
+                    Path path = Path.fromNBT((CompoundTag) crushedStack.getOrCreateTag().get("path"));
+                    path.progress();
+                    System.out.println(path.toNBT());
+                    crushedStack.getOrCreateTag().put("path", path.toNBT());
+                }
+            }
             if(!stack.is(ItemRegistration.GENERIC_CRUSHED.get())){
-                crushedStack.getOrCreateTag().putString("item", stack.getHoverName().getString());
+                crushedStack.getOrCreateTag().putString("item", stack.getItem().getRegistryName().getPath());
+                Path path = new Path();
+                ItemPathDataListener.ITEM_PATH_DATA.get(Registry.ITEM.get(stack.getItem().getRegistryName())).dirs.getDirections().forEach(path::add);
+                path.progress();
+                System.out.println(path.toNBT());
+                crushedStack.getOrCreateTag().put("path", path.toNBT());
             }
             inventory.setStackInSlot(0, crushedStack);
         }

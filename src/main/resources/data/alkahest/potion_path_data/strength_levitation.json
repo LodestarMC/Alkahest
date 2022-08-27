@@ -1,0 +1,13 @@
+{
+  "name": "alkahest:flying_scotsman",
+  "effects": [
+    {"name":  "minecraft:strength", "duration":  100, "amplifier":  10},
+    {"name":  "minecraft:levitation", "duration":  1, "amplifier": 10}
+  ],
+  "location": {
+    "x": 5,
+    "y": 2,
+    "z": 1
+  },
+  "radius": 5
+}

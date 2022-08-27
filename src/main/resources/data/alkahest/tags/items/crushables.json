@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "minecraft:blaze_powder",
-    "alkahest:generic_crushed"
+    "alkahest:generic_crushed",
+    "minecraft:glowstone_dust"
   ]
 }

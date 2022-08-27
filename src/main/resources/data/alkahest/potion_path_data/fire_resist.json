@@ -1,13 +1,27 @@
 {
   "name": "alkahest:fire_resist_poison",
   "effects": [
-    {"name":  "minecraft:fire_resistance", "duration":  30, "amplifier":  2},
-    {"name":  "minecraft:poison", "duration":  5, "amplifier": 7}
+    {
+      "name": "minecraft:fire_resistance",
+      "duration": 30,
+      "amplifier": 2
+    },
+    {
+      "name": "minecraft:poison",
+      "duration": 5,
+      "amplifier": 7
+    }
   ],
   "location": {
     "x": 1,
     "y": 1,
     "z": 1
   },
-  "radius": 1
+  "radius": 1,
+  "color": {
+    "r": 129,
+    "g": 248,
+    "b": 97,
+    "a": 125
+  }
 }

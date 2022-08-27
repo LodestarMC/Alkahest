@@ -16,6 +16,7 @@ public class ItemRegistration {
     public static final RegistryObject<Item> GENERIC_CRUSHED = ITEMS.register("generic_crushed", () -> new GenericCrushedItem(properties(CreativeModeTab.TAB_BREWING)));
 
     public static final RegistryObject<Item> MORTAR = ITEMS.register("mortar", () -> new BlockItem(BlockRegistration.MORTAR.get(), properties(CreativeModeTab.TAB_BREWING)));
+    public static final RegistryObject<Item> CAULDRON = ITEMS.register("cauldron", () -> new BlockItem(BlockRegistration.CAULDRON.get(), properties(CreativeModeTab.TAB_BREWING)));
     public static final RegistryObject<Item> PESTLE = ITEMS.register("pestle", () -> new PestleItem(properties(CreativeModeTab.TAB_BREWING)));
 
     public static Item.Properties properties(CreativeModeTab tab) {

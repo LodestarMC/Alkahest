@@ -15,7 +15,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import team.lodestar.alkahest.Alkahest;
+import team.lodestar.alkahest.core.alchemy.PotionMap;
 import team.lodestar.alkahest.core.path.PotionPathData;
+import team.lodestar.lodestone.helpers.util.Color;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,6 +26,7 @@ import java.util.Map;
 
 public class PotionPathDataListener extends SimpleJsonResourceReloadListener {
     public static Map<ResourceLocation, PotionPathData> POTION_PATH_DATA = new HashMap<>();
+    public static PotionMap potionMap = new PotionMap(new ArrayList<>());
     private static final Gson GSON = new Gson();
     public PotionPathDataListener() {
         super(GSON, "potion_path_data");
@@ -64,8 +67,17 @@ public class PotionPathDataListener extends SimpleJsonResourceReloadListener {
             int z = location.getAsJsonPrimitive("z").getAsInt();
             Vec3 vec3 = new Vec3(x, y, z);
             float radius = object.getAsJsonPrimitive("radius").getAsFloat();
-            PotionPathData potionPathData = new PotionPathData(effectList, vec3, radius);
+            JsonObject color = object.getAsJsonObject("color");
+            int r = color.getAsJsonPrimitive("r").getAsInt();
+            int g = color.getAsJsonPrimitive("g").getAsInt();
+            int b = color.getAsJsonPrimitive("b").getAsInt();
+            int a = color.getAsJsonPrimitive("a").getAsInt();
+            PotionPathData potionPathData = new PotionPathData(effectList, vec3, radius, new Color(r,g,b,a));
             POTION_PATH_DATA.put(resourceLocation, potionPathData);
+            List<PotionPathData> potionPathDataList = new ArrayList<>();
+            for(PotionPathData potionPathData1 : POTION_PATH_DATA.values()){
+                potionMap.add(potionPathData1);
+            }
             Alkahest.LOGGER.info("Loaded path data for " + name + " with " + effectList.size() + " effects: " + effectList + " at " + vec3 + " with radius " + radius);
         }
     }

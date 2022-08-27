@@ -6,10 +6,12 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import team.lodestar.alkahest.Alkahest;
+import team.lodestar.alkahest.common.block.cauldron.CauldronBlock;
 import team.lodestar.alkahest.common.block.mortar.MortarBlock;
 
 public class BlockRegistration {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Alkahest.MODID);
 
     public static final RegistryObject<Block> MORTAR = BLOCKS.register("mortar", () -> new MortarBlock<>(Block.Properties.of(Material.STONE)).setBlockEntity(BlockEntityRegistration.MORTAR));
+    public static final RegistryObject<Block> CAULDRON = BLOCKS.register("cauldron", () -> new CauldronBlock<>(Block.Properties.of(Material.HEAVY_METAL)).setBlockEntity(BlockEntityRegistration.CAULDRON));
 }

@@ -36,4 +36,17 @@ public class IngredientPathUtils {
         }
         return points;
     }
+
+    public static List<Vec3> pathPoints(Path path){
+        List<List<Direction>> directions = path.directionMap.keySet().stream().toList();
+        List<Vec3> points = new ArrayList<>();
+        Vec3 vec = Vec3.ZERO;
+        for(List<Direction> dir : directions){
+            for(Direction d : dir){
+                vec = vec.add(Vec3.atLowerCornerOf(d.getNormal()).scale(path.directionMap.get(dir)/(100f/path.directionMap.size())));
+            }
+            points.add(vec);
+        }
+        return points;
+    }
 }

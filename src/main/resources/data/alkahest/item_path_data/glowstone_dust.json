@@ -1,12 +1,9 @@
 {
   "item": "minecraft:glowstone_dust",
   "path": [
-    "north",
-    "up",
-    "east",
     "south",
-    "west",
-    "down"
+    "east",
+    "up"
   ],
   "elements": {
     "fire": 8,

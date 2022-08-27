@@ -3,6 +3,7 @@ package team.lodestar.alkahest.core.path;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import team.lodestar.lodestone.setup.LodestoneRenderTypeRegistry;
 
 import java.util.ArrayList;
 import java.util.List;

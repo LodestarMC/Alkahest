@@ -38,20 +38,6 @@ public class MortarRenderer implements BlockEntityRenderer<MortarBlockEntity> {
             ps.scale(0.15f, 0.15f, 0.15f);
             if(mortar.inventory.getStackInSlot(0).is(ItemRegistration.GENERIC_CRUSHED.get())){
                 Path path = Path.fromNBT(mortar.inventory.getStackInSlot(0).hasTag() ? (CompoundTag) mortar.inventory.getStackInSlot(0).getTag().get("path") : null);
-//                ItemPathData pathData = ItemPathDataListener.ITEM_PATH_DATA.get(Registry.ITEM.get(ResourceLocation.tryParse(mortar.inventory.getStackInSlot(0).getTag().getString("item"))));
-//                if(pathData != null){
-//                    List<Vec3i> nodes = pathData.nodes;
-//                    for(Vec3i node : nodes){
-//                        if(IngredientPathUtils.getCurrentVector(path).equals(Vec3.atCenterOf(node))){
-//                            if(!passedPoints.contains(IngredientPathUtils.getCurrentVector(path))){
-//                                passedPoints.add(IngredientPathUtils.getCurrentVector(path));
-//                            }
-//                        }
-//                    }
-//                }
-//                if(path != null && !passedPoints.isEmpty()){
-//                    PotionMapRenderHelper.drawLineBetween(pBufferSource, ps, passedPoints.get(passedPoints.size()-1), IngredientPathUtils.getCurrentVector(path), 0.02f, 255, 255, 255, 255);
-//                }
                 List<Vec3> passPoints = IngredientPathUtils.passedPoints(path);
                 for(int i = 0; i < passPoints.size()-1; i++){
                     ps.pushPose();

@@ -48,7 +48,8 @@ public class ItemPathDataListener extends SimpleJsonResourceReloadListener {
             }
             JsonArray path = object.getAsJsonArray("path");
             Path p = new Path();
-            for(JsonElement direction : path) {
+            for(int j = 0; j < path.size(); j++) {
+                JsonElement direction = path.get(j);
                 if(direction.isJsonArray()){
                     JsonArray dir = direction.getAsJsonArray();
                     List<Direction> directions = new ArrayList<>();
@@ -84,7 +85,7 @@ public class ItemPathDataListener extends SimpleJsonResourceReloadListener {
             }
             ItemPathData itemPathData = new ItemPathData(new DirectionData(p), elementData);
             ITEM_PATH_DATA.put(item, itemPathData);
-            Alkahest.LOGGER.info("Path data for " + item.getName(item.getDefaultInstance()).getString() + " loaded, Path: " + itemPathData.getPathString() + ", Elements: " + itemPathData.getElementsString());
+            Alkahest.LOGGER.info("Path data for " + item.getName(item.getDefaultInstance()).getString() + " loaded, Path: " + itemPathData.dirs.getDirections() + ", Elements: " + itemPathData.getElementsString());
         }
     }
 }

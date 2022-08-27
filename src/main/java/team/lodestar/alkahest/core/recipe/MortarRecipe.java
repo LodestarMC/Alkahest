@@ -12,12 +12,13 @@ import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import team.lodestar.alkahest.Alkahest;
+import team.lodestar.lodestone.systems.recipe.ILodestoneRecipe;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class MortarRecipe implements Recipe<SimpleContainer> {
+public class MortarRecipe extends ILodestoneRecipe{
     private final ResourceLocation id;
     private final ItemStack output;
     private final NonNullList<Ingredient> ingredients;
@@ -82,7 +83,6 @@ public class MortarRecipe implements Recipe<SimpleContainer> {
      * @param pContainer
      * @param pLevel
      */
-    @Override
     public boolean matches(SimpleContainer pContainer, Level pLevel) {
         for(int i = 0; i < ingredients.size(); i++){
             if(!ingredients.get(i).test(pContainer.getItem(i))){
@@ -97,7 +97,6 @@ public class MortarRecipe implements Recipe<SimpleContainer> {
      *
      * @param pContainer
      */
-    @Override
     public ItemStack assemble(SimpleContainer pContainer) {
         return output.copy();
     }

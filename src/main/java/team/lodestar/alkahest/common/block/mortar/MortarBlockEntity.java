@@ -7,13 +7,18 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.Tags;
 import org.jetbrains.annotations.Nullable;
 import team.lodestar.alkahest.Alkahest;
 import team.lodestar.alkahest.core.recipe.MortarRecipe;
 import team.lodestar.alkahest.registry.common.BlockEntityRegistration;
+import team.lodestar.alkahest.registry.common.ItemRegistration;
+import team.lodestar.alkahest.registry.common.ItemTagRegistry;
 import team.lodestar.lodestone.helpers.BlockHelper;
 import team.lodestar.lodestone.systems.blockentity.ItemHolderBlockEntity;
 import team.lodestar.lodestone.systems.blockentity.LodestoneBlockEntityInventory;
@@ -22,10 +27,8 @@ import java.util.Optional;
 
 public class MortarBlockEntity extends ItemHolderBlockEntity {
     public LodestoneBlockEntityInventory output;
-    public MortarRecipe recipe;
-    public int progress;
-    public int cooldown;
-    public int spins;
+    boolean isSpinning = false;
+    Player lastInteracted;
 
     public MortarBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -51,62 +54,80 @@ public class MortarBlockEntity extends ItemHolderBlockEntity {
 
     @Override
     public InteractionResult onUse(Player player, InteractionHand hand) {
-        if(player.getItemInHand(hand).isEmpty() && !player.isCrouching() && output.isEmpty() && !inventory.isEmpty()){
-            level.playSound(null, worldPosition, SoundEvents.GRINDSTONE_USE, SoundSource.BLOCKS, 1f, 1f);
-            if(spins < 5){
-                spins++;
-            } else {
-                craftItem(this);
-            }
-            return InteractionResult.SUCCESS;
+//        if(player.getItemInHand(hand).isEmpty() && player.isCrouching() && !inventory.isEmpty()){
+//            super.onUse(player, hand);
+//            return InteractionResult.SUCCESS;
+//        }
+//        if(player.getItemInHand(hand).is(Items.STICK) && !inventory.isEmpty() && !player.isCrouching()){
+//            level.playSound(null, worldPosition, SoundEvents.GRINDSTONE_USE, SoundSource.BLOCKS, 1f, 1f);
+//            //addPercentage(inventory.getStackInSlot(0));
+//            isSpinning = true;
+//            lastInteracted = player;
+//            return InteractionResult.SUCCESS;
+//        }
+//        super.onUse(player, hand);
+//        return InteractionResult.SUCCESS;
+        if(player.getItemInHand(hand).is(ItemRegistration.PESTLE.get())){
+            return InteractionResult.PASS;
         }
-        if(spins > 5){
-            spins = 0;
-        }
-        super.onUse(player, hand);
-        if(!output.isEmpty()){
-            output.interact(level, player, hand);
-        }
-        return InteractionResult.SUCCESS;
-    }
-
-    private static boolean hasRecipe(MortarBlockEntity entity){
-        Level level = entity.level;
-        SimpleContainer inventory = new SimpleContainer(entity.inventory.getSlots());
-        for(int i = 0; i < entity.inventory.getSlots(); i++){
-            inventory.setItem(i, entity.inventory.extractItem(i, 1, true));
-        }
-        Optional<MortarRecipe> match = level.getRecipeManager().getRecipeFor(MortarRecipe.Type.INSTANCE, inventory, level);
-        return match.isPresent();
-    }
-
-    private static void craftItem(MortarBlockEntity entity){
-        Level level = entity.level;
-        SimpleContainer inventory = new SimpleContainer(entity.inventory.getSlots());
-        for(int i = 0; i < entity.inventory.getSlots(); i++){
-            inventory.setItem(i, entity.inventory.extractItem(i, 1, false));
-        }
-        Optional<MortarRecipe> match = level.getRecipeManager().getRecipeFor(MortarRecipe.Type.INSTANCE, inventory, level);
-        Alkahest.LOGGER.info(match.toString());
-
-        if(match.isPresent()) {
-            for(int i = 0; i < entity.inventory.nonEmptyItemAmount; i++){
-                entity.inventory.extractItem(i, 1, false);
-            }
-            entity.output.setStackInSlot(0, match.get().getResultItem());
-            entity.progress = 0;
-            entity.spins = 0;
-            entity.cooldown = 0;
-        }
+        return super.onUse(player, hand);
     }
 
     @Override
     public void tick() {
         super.tick();
-        if(cooldown < 10 && spins > 1){
-            cooldown++;
+        if(isSpinning){
+            if(lastInteracted != null && lastInteracted.getItemInHand(InteractionHand.MAIN_HAND).is(Items.STICK)){
+                if(!lastInteracted.isCrouching()){
+                    addPercentage(inventory.getStackInSlot(0));
+                    isSpinning = false;
+                    lastInteracted = null;
+                }
+            }
         }
     }
+
+    public void addPercentage(ItemStack stack){
+        if(stack.is(ItemTagRegistry.CRUSHABLES)){
+            ItemStack crushedStack = stack.is(ItemRegistration.GENERIC_CRUSHED.get()) ? stack : new ItemStack(ItemRegistration.GENERIC_CRUSHED.get(), stack.getCount());
+            int crushedAmount = stack.is(ItemRegistration.GENERIC_CRUSHED.get()) ? Math.min(stack.getTag().getInt("crush") + 1, 100) : 1;
+            crushedStack.getOrCreateTag().putInt("crush", crushedAmount);
+            if(!stack.is(ItemRegistration.GENERIC_CRUSHED.get())){
+                crushedStack.getOrCreateTag().putString("item", stack.getHoverName().getString());
+            }
+            inventory.setStackInSlot(0, crushedStack);
+        }
+    }
+//    private static boolean hasRecipe(MortarBlockEntity entity){
+//        Level level = entity.level;
+//        SimpleContainer inventory = new SimpleContainer(entity.inventory.getSlots());
+//        for(int i = 0; i < entity.inventory.getSlots(); i++){
+//            inventory.setItem(i, entity.inventory.extractItem(i, 1, true));
+//        }
+//        Optional<MortarRecipe> match = level.getRecipeManager().getRecipeFor(MortarRecipe.Type.INSTANCE, inventory, level);
+//        return match.isPresent();
+//    }
+//
+//    private static void craftItem(MortarBlockEntity entity){
+//        Level level = entity.level;
+//        SimpleContainer inventory = new SimpleContainer(entity.inventory.getSlots());
+//        for(int i = 0; i < entity.inventory.getSlots(); i++){
+//            inventory.setItem(i, entity.inventory.extractItem(i, 1, false));
+//        }
+//        Optional<MortarRecipe> match = level.getRecipeManager().getRecipeFor(MortarRecipe.Type.INSTANCE, inventory, level);
+//        Alkahest.LOGGER.info(match.toString());
+//
+//        if(match.isPresent()) {
+//            for(int i = 0; i < entity.inventory.nonEmptyItemAmount; i++){
+//                entity.inventory.extractItem(i, 1, false);
+//            }
+//            entity.output.setStackInSlot(0, match.get().getResultItem());
+//            entity.progress = 0;
+//            entity.spins = 0;
+//            entity.cooldown = 0;
+//        }
+
+//    }
 
     @Override
     public void onBreak(@Nullable Player player) {

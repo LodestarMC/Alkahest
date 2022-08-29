@@ -111,6 +111,7 @@ public class MortarBlockEntity extends ItemHolderBlockEntity {
                 path.progress();
                 System.out.println(path.toNBT());
                 crushedStack.getOrCreateTag().put("path", path.toNBT());
+                crushedStack.getOrCreateTag().putInt("color", ItemPathDataListener.ITEM_PATH_DATA.get(Registry.ITEM.get(stack.getItem().getRegistryName())).color);
             }
             inventory.setStackInSlot(0, crushedStack);
         }

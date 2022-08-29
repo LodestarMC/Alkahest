@@ -108,7 +108,7 @@ public class PotionMapRenderHelper {
 
     public static void renderInvertedCube(PoseStack ps, MultiBufferSource buffer, float size, RenderType renderType, Color color) {
         ps.pushPose();
-        ps.translate(-(Math.floor(size / 2)), 0, -(Math.floor(size / 2)));
+        ps.translate(-size / 2, 0, -size / 2);
         ps.mulPose(Vector3f.XP.rotationDegrees(90));
         VertexConsumer buff = buffer.getBuffer(renderType);
         renderQuad(ps, size, buff, color);

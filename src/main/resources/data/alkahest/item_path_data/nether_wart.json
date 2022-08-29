@@ -1,0 +1,13 @@
+{
+  "item": "minecraft:nether_wart",
+  "path": [
+    "up"
+  ],
+  "elements": {
+    "fire": 0,
+    "air": 4,
+    "water": 1,
+    "earth": 1
+  },
+  "color": "#990033"
+}

@@ -1,40 +1,65 @@
 package team.lodestar.alkahest.core.path;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.Style;
+import net.minecraft.world.item.Rarity;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class Path {
-    Map<List<Direction>, Float> directionMap;
+    List<PathProgressData> directionMap;
 
     public Path() {
-        directionMap = new HashMap<>();
+        directionMap = new ArrayList<>();
+    }
+
+    public boolean isEmpty(){
+        return directionMap.isEmpty();
     }
 
     public void add(List<Direction> directions, float progress) {
-        directionMap.put(directions, progress);
+        directionMap.add(new PathProgressData(progress, directions));
     }
 
     public void add(List<Direction> directions) {
-        directionMap.put(directions, 0f);
+        directionMap.add(new PathProgressData(0, directions));
     }
 
     public void progress() {
         float perDir = 100f / directionMap.size();
-        for (List<Direction> directions : directionMap.keySet()) {
-            if (directionMap.get(directions) < perDir) {
-                directionMap.put(directions, directionMap.get(directions) + 1);
+        for(PathProgressData data : directionMap){
+            if(data.getProgress() < perDir){
+                data.setProgress(data.getProgress() + 1);
                 return;
             }
         }
     }
 
-    public void addPath(Path path) {
-        for (List<Direction> directions : path.directionMap.keySet()) {
-            directionMap.put(directions, path.directionMap.get(directions));
+    public float getProgress(List<Direction> dir){
+        for(PathProgressData data : directionMap){
+            if(data.getPath().equals(dir)){
+                return data.getProgress();
+            }
         }
+        return 0f;
+    }
+
+    public List<List<Direction>> getAllDirections() {
+        List<List<Direction>> directions = new ArrayList<>();
+        for(PathProgressData data : directionMap){
+            List<Direction> secondDirs = data.getPath();
+            directions.add(secondDirs);
+        }
+        return directions;
+    }
+
+    public void addPath(Path path) {
+        directionMap.addAll(path.directionMap);
     }
 
     public void clear() {
@@ -44,17 +69,8 @@ public class Path {
     public CompoundTag toNBT() {
         CompoundTag tag = new CompoundTag();
         ListTag list = new ListTag();
-        for (List<Direction> directions : directionMap.keySet()) {
-            ListTag dir = new ListTag();
-            for(int i = 0; i < directions.size(); i++){
-                CompoundTag directionCompound = new CompoundTag();
-                directionCompound.putString(Integer.toString(i), directions.get(i).getName().toLowerCase(Locale.ROOT));
-                dir.add(i, directionCompound);
-            }
-            CompoundTag dirTag = new CompoundTag();
-            dirTag.put("directions", dir);
-            dirTag.putFloat("progress", directionMap.get(directions));
-            list.add(dirTag);
+        for(PathProgressData data : directionMap){
+            list.add(data.toNBT());
         }
         tag.put("directionsList", list);
         return tag;
@@ -63,15 +79,9 @@ public class Path {
     public static Path fromNBT(CompoundTag tag) {
         Path path = new Path();
         ListTag list = tag.getList("directionsList", 10);
-        for (int i = 0; i < list.size(); i++) {
-            CompoundTag dirTag = list.getCompound(i);
-            List<Direction> directions = new ArrayList<>();
-            ListTag dir = dirTag.getList("directions", 10);
-            for (int j = 0; j < dir.size(); j++) {
-                CompoundTag directionCompound = (CompoundTag) dir.get(j);
-                directions.add(Direction.byName(directionCompound.getString(Integer.toString(j))));
-            }
-            path.add(directions, dirTag.getFloat("progress"));
+        for(int i = 0; i < list.size(); i++){
+            CompoundTag directionCompound = list.getCompound(i);
+            path.directionMap.add(PathProgressData.fromNBT(directionCompound));
         }
         return path;
     }
@@ -79,11 +89,19 @@ public class Path {
     public String getProgress() {
         StringBuilder progress = new StringBuilder();
         float percent = 0;
-        for (List<Direction> directions : directionMap.keySet()) {
-            percent += directionMap.get(directions);
+        for(PathProgressData data : directionMap){
+            percent += data.getProgress();
         }
         progress.append(Math.min(100, percent));
         return progress.toString().toUpperCase(Locale.ROOT);
+    }
+
+    public float getFlatProgress() {
+        float percent = 0;
+        for(PathProgressData data : directionMap){
+            percent += data.getProgress();
+        }
+        return percent;
     }
 
 }

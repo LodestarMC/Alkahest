@@ -28,6 +28,7 @@ public class ItemPathDataListener extends SimpleJsonResourceReloadListener {
         event.addListener(new ItemPathDataListener());
     }
 
+    // TODO: make first step in path always be complete, allow uncrushed items to have first step in path
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         ITEM_PATH_DATA.clear();
@@ -64,7 +65,11 @@ public class ItemPathDataListener extends SimpleJsonResourceReloadListener {
                             directions.add(direction1);
                         }
                     }
-                    p.add(directions);
+                    if(p.isEmpty()){
+                        p.add(directions, 100f/path.size());
+                    } else {
+                        p.add(directions);
+                    }
                 } else {
                     if(Direction.byName(direction.getAsString()) != null) {
                         p.add(Collections.singletonList(Direction.byName(direction.getAsString())));
@@ -83,7 +88,8 @@ public class ItemPathDataListener extends SimpleJsonResourceReloadListener {
                 }
                 elementData.put(element, Math.round(entry.getValue().getAsFloat() * 10) / 10.0f);
             }
-            ItemPathData itemPathData = new ItemPathData(new DirectionData(p), elementData);
+            int color = Integer.parseInt(object.getAsJsonPrimitive("color").getAsString().replaceFirst("#", ""), 16);
+            ItemPathData itemPathData = new ItemPathData(new DirectionData(p), elementData, color);
             ITEM_PATH_DATA.put(item, itemPathData);
             Alkahest.LOGGER.info("Path data for " + item.getName(item.getDefaultInstance()).getString() + " loaded, Path: " + itemPathData.dirs.getDirections() + ", Elements: " + itemPathData.getElementsString());
         }

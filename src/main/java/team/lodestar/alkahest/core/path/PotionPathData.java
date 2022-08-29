@@ -1,9 +1,14 @@
 package team.lodestar.alkahest.core.path;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.registries.ForgeRegistries;
 import team.lodestar.lodestone.helpers.util.Color;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PotionPathData {
@@ -19,6 +24,46 @@ public class PotionPathData {
         this.color = color;
     }
 
+    public CompoundTag toNbt() {
+        CompoundTag tag = new CompoundTag();
+        ListTag list = new ListTag();
+        for(MobEffectInstance effect : effects){
+            CompoundTag effectTag = new CompoundTag();
+            effectTag.putString("id", ForgeRegistries.MOB_EFFECTS.getKey(effect.getEffect()).toString());
+            effectTag.putInt("duration", effect.getDuration());
+            effectTag.putInt("amplifier", effect.getAmplifier());
+            list.add(effectTag);
+        }
+        tag.put("effects", list);
+        CompoundTag locationTag = new CompoundTag();
+        locationTag.putDouble("x", location.x);
+        locationTag.putDouble("y", location.y);
+        locationTag.putDouble("z", location.z);
+        tag.put("location", locationTag);
+        tag.putFloat("radius", radius);
+        tag.putInt("color", color.getRGB());
+        return tag;
+    }
+
+    public static PotionPathData fromNbt(CompoundTag tag) {
+        ListTag list = tag.getList("effects", 10);
+        List<MobEffectInstance> effects = new ArrayList<>();
+        for(int i = 0; i < list.size(); i++){
+            CompoundTag effectTag = list.getCompound(i);
+            String id = effectTag.getString("id");
+            int duration = effectTag.getInt("duration");
+            int amplifier = effectTag.getInt("amplifier");
+            MobEffectInstance effect = new MobEffectInstance(ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(id)), duration, amplifier);
+            effects.add(effect);
+        }
+        CompoundTag locationTag = tag.getCompound("location");
+        Vec3 location = new Vec3(locationTag.getDouble("x"), locationTag.getDouble("y"), locationTag.getDouble("z"));
+        float radius = tag.getFloat("radius");
+        int intcol = tag.getInt("color");
+        Color color = new Color(intcol);
+        return new PotionPathData(effects, location, radius, color);
+    }
+
     public List<MobEffectInstance> getEffects() {
         return effects;
     }
@@ -29,6 +74,10 @@ public class PotionPathData {
 
     public Vec3 getLocation() {
         return location;
+    }
+
+    public boolean isInRadius(Vec3 location){
+        return this.location.distanceTo(location) <= radius;
     }
 
     public void setLocation(Vec3 location) {

@@ -29,6 +29,15 @@ public class GenericCrushedItem extends Item {
     }
 
     @Override
+    public int getBarWidth(ItemStack pStack) {
+        if(pStack.hasTag() && pStack.getTag() != null){
+            CompoundTag tag = (CompoundTag) pStack.getTag().get("path");
+            return (int) (tag.getInt("progress") / 100f * 16);
+        }
+        return 0;
+    }
+
+    @Override
     public Component getName(ItemStack pStack) {
         if(pStack.hasTag()){
             return new TextComponent("Crushed " + pStack.getTag().getString("item")).append(new TextComponent(" " + pStack.getTag().getInt("crush")+"%").withStyle(s -> s.withColor(ChatFormatting.GREEN)));

@@ -14,11 +14,13 @@ public class ItemPathData {
     public final DirectionData dirs;
     public List<Vec3i> nodes;
     public final Map<Element, Float> elements;
+    public final int color;
 
-    public ItemPathData(DirectionData dirs, Map<Element, Float> pElements) {
+    public ItemPathData(DirectionData dirs, Map<Element, Float> pElements, int pColor) {
         this.dirs = dirs;
         this.elements = pElements;
         calculateNodes();
+        this.color = pColor;
     }
 
     public static String getPathString(DirectionData pPath) {

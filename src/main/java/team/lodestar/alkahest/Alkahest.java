@@ -16,6 +16,7 @@ import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
+import team.lodestar.alkahest.core.handlers.AlkahestPacketHandler;
 
 import java.util.stream.Collectors;
 
@@ -44,6 +45,7 @@ public class Alkahest {
         BLOCK_ENTITY_TYPES.register(modEventBus);
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
+        AlkahestPacketHandler.init();
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
     }

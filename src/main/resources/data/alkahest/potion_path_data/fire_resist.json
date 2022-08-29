@@ -3,12 +3,12 @@
   "effects": [
     {
       "name": "minecraft:fire_resistance",
-      "duration": 30,
+      "duration": 300,
       "amplifier": 2
     },
     {
       "name": "minecraft:poison",
-      "duration": 5,
+      "duration": 100,
       "amplifier": 7
     }
   ],

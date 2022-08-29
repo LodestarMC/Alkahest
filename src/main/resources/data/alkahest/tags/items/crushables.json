@@ -3,6 +3,8 @@
   "values": [
     "minecraft:blaze_powder",
     "alkahest:generic_crushed",
-    "minecraft:glowstone_dust"
+    "minecraft:glowstone_dust",
+    "minecraft:sugar",
+    "minecraft:nether_wart"
   ]
 }

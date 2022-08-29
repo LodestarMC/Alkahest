@@ -34,6 +34,14 @@ public class PathProgressData {
         this.path = path;
     }
 
+    public void invert(){
+        List<Direction> newPath = new ArrayList<>();
+        for(Direction dir : path){
+            newPath.add(dir.getOpposite());
+        }
+        path = newPath;
+    }
+
     public CompoundTag toNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putFloat("progress", progress);

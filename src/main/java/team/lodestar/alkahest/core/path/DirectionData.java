@@ -18,4 +18,8 @@ public record DirectionData(Path directions) {
         }
         return 0f;
     }
+
+    public Path getPath() {
+        return directions;
+    }
 }

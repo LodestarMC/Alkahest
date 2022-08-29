@@ -37,4 +37,8 @@ public class PotionMap {
     public PotionPathData getPotionPathDataAt(Vec3 location) {
         return getPotionPathData(potion -> potion.getLocation().equals(location));
     }
+
+    public void clear(){
+        map.clear();
+    }
 }

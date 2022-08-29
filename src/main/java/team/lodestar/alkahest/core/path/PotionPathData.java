@@ -42,6 +42,7 @@ public class PotionPathData {
         tag.put("location", locationTag);
         tag.putFloat("radius", radius);
         tag.putInt("color", color.getRGB());
+        tag.putInt("alpha", color.getAlpha());
         return tag;
     }
 
@@ -61,6 +62,7 @@ public class PotionPathData {
         float radius = tag.getFloat("radius");
         int intcol = tag.getInt("color");
         Color color = new Color(intcol);
+        color.setAlpha(tag.getInt("alpha"));
         return new PotionPathData(effects, location, radius, color);
     }
 

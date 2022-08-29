@@ -73,8 +73,9 @@ public class MortarBlockEntity extends ItemHolderBlockEntity {
 //        return InteractionResult.SUCCESS;
         if(player.getItemInHand(hand).is(ItemRegistration.PESTLE.get())){
             return InteractionResult.PASS;
+        } else {
+            return super.onUse(player, hand);
         }
-        return super.onUse(player, hand);
     }
 
     @Override
@@ -105,13 +106,14 @@ public class MortarBlockEntity extends ItemHolderBlockEntity {
                 }
             }
             if(!stack.is(ItemRegistration.GENERIC_CRUSHED.get())){
-                crushedStack.getOrCreateTag().putString("item", stack.getItem().getRegistryName().getPath());
-                Path path = new Path();
-                ItemPathDataListener.ITEM_PATH_DATA.get(Registry.ITEM.get(stack.getItem().getRegistryName())).dirs.getDirections().forEach(path::add);
+                crushedStack.getOrCreateTag().putString("item", stack.getItem().getRegistryName().toString());
+                Path path = ItemPathDataListener.ITEM_PATH_DATA.get(Registry.ITEM.get(stack.getItem().getRegistryName())).getPath();
                 path.progress();
                 System.out.println(path.toNBT());
                 crushedStack.getOrCreateTag().put("path", path.toNBT());
-                crushedStack.getOrCreateTag().putInt("color", ItemPathDataListener.ITEM_PATH_DATA.get(Registry.ITEM.get(stack.getItem().getRegistryName())).color);
+                crushedStack.getOrCreateTag().putInt("lightestColor", ItemPathDataListener.ITEM_PATH_DATA.get(Registry.ITEM.get(stack.getItem().getRegistryName())).lightestColor);
+                crushedStack.getOrCreateTag().putInt("middleColor", ItemPathDataListener.ITEM_PATH_DATA.get(Registry.ITEM.get(stack.getItem().getRegistryName())).middleColor);
+                crushedStack.getOrCreateTag().putInt("darkestColor", ItemPathDataListener.ITEM_PATH_DATA.get(Registry.ITEM.get(stack.getItem().getRegistryName())).darkestColor);
             }
             inventory.setStackInSlot(0, crushedStack);
         }

@@ -1,5 +1,6 @@
 {
   "item": "minecraft:nether_wart",
+  "modifier": "none",
   "path": [
     "up"
   ],
@@ -9,5 +10,7 @@
     "water": 1,
     "earth": 1
   },
-  "color": "#990033"
+  "lightestColor": "#be3e4a",
+  "middleColor": "#a62530",
+  "darkestColor": "#4e1116"
 }

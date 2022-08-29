@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -19,9 +20,7 @@ import net.minecraftforge.network.PacketDistributor;
 import team.lodestar.alkahest.core.handlers.AlkahestPacketHandler;
 import team.lodestar.alkahest.core.listeners.PotionPathDataListener;
 import team.lodestar.alkahest.core.net.ClientboundCauldronPacket;
-import team.lodestar.alkahest.core.path.IngredientPathUtils;
-import team.lodestar.alkahest.core.path.Path;
-import team.lodestar.alkahest.core.path.PotionPathData;
+import team.lodestar.alkahest.core.path.*;
 import team.lodestar.alkahest.registry.common.BlockEntityRegistration;
 import team.lodestar.lodestone.helpers.BlockHelper;
 import team.lodestar.lodestone.systems.blockentity.ItemHolderBlockEntity;
@@ -38,6 +37,7 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
     public double progress = 0;
     public double previousVisualPercentage = 0;
     public double visualPercentage = 0;
+    public boolean flipped = false;
 
     public CauldronBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -56,10 +56,10 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
 
     @Override
     public InteractionResult onUse(Player player, InteractionHand hand) {
-        if(player.getItemInHand(hand).is(Items.POTION)){
+        if (player.getItemInHand(hand).is(Items.POTION)) {
             ItemStack stack = player.getItemInHand(hand);
             List<MobEffectInstance> effects = new ArrayList<>();
-            for(PotionPathData data : containedPotions){
+            for (PotionPathData data : containedPotions) {
                 effects.addAll(data.effects);
             }
             PotionUtils.setCustomEffects(stack, effects);
@@ -74,14 +74,14 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
     @Override
     public void tick() {
         super.tick();
-        if(progress < 4){
+        if (progress < 4) {
             progress++;
         }
         if (!level.isClientSide) {
             dissolveItem(inventory.getStackInSlot(0), 0);
         }
         previousVisualPercentage = visualPercentage;
-        visualPercentage = Mth.lerp(0.5f, visualPercentage, progress/4);
+        visualPercentage = Mth.lerp(0.5f, visualPercentage, progress / 4);
 
     }
 
@@ -94,18 +94,31 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
                 if (tag.contains("path")) {
                     inventory.clear();
                     Path path = Path.fromNBT(tag.getCompound("path"));
-                    paths.add(path);
-                    level.getServer().sendMessage(new TextComponent("Adding path"), UUID.randomUUID());
-                    if(paths.size() >0){
-                        Vec3 vec = IngredientPathUtils.getCurrentVector(paths.get(paths.size()-1));
-                        level.getServer().sendMessage(new TextComponent(vec.toString()), UUID.randomUUID());
-                        PotionPathDataListener.potionMap.map.forEach((k) -> {
-                            level.getServer().sendMessage(new TextComponent(k.location.toString()), UUID.randomUUID());
-                        });
-                        for(String s : containedPotionNames){
-                            level.getServer().sendMessage(new TextComponent(s), UUID.randomUUID());
+                    PathModifier modifier = path.getModifier();
+                    switch (modifier) {
+                        case FLIP_ALL -> {
+                            for (Path p : paths) {
+                                p.getDirectionMap().forEach(PathProgressData::invert);
+                            }
+                            if (!flipped)
+                                path.getDirectionMap().forEach(PathProgressData::invert);
+                            paths.add(path);
+                            progress = 0;
+                            flipped = !flipped;
                         }
-                        progress = 0;
+                        case FLIP -> {
+                            flipped = !flipped;
+                            path.getDirectionMap().forEach(PathProgressData::invert);
+                            paths.add(path);
+                            progress = 0;
+                        }
+                        default -> {
+                            if (flipped) {
+                                path.getDirectionMap().forEach(PathProgressData::invert);
+                            }
+                            paths.add(path);
+                            progress = 0;
+                        }
                     }
                 }
             }
@@ -115,6 +128,8 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
     }
 
     public void checkPotionIntersections() {
+        containedPotions.clear();
+        containedPotionNames.clear();
         List<Path> path = paths;
         List<Vec3> passPoints = new ArrayList<>();
         for (Path p : path) {
@@ -123,13 +138,12 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
         for (Vec3 node : passPoints) {
             PotionPathData potion = PotionPathDataListener.potionMap.isInRadius(node);
             if (potion != null) {
-                if (containedPotions.contains(potion)) {
-                    continue;
+                if(!containedPotions.contains(potion)) {
+                    containedPotions.add(potion);
                 }
-                containedPotions.add(potion);
                 for (MobEffectInstance ef : potion.effects) {
-                    String effName = ef.toString().intern();
-                    if (!containedPotionNames.contains(effName)) {
+                    String effName = (new TranslatableComponent(ef.getDescriptionId())).getString() + ", Strength: " + ef.getAmplifier() + ", Duration: " + ef.getDuration();
+                    if(!containedPotionNames.contains(effName)) {
                         containedPotionNames.add(effName);
                     }
                 }

@@ -1,5 +1,6 @@
 {
   "item": "minecraft:blaze_powder",
+  "modifier": "flip_all",
   "path": [
     ["east", "down", "south"],
     "up",
@@ -14,5 +15,7 @@
     "water": 9.01,
     "earth": 1.000000001
   },
-  "color": "#FF6700"
+  "lightestColor": "#FFFFB2",
+  "middleColor": "#FFA301",
+  "darkestColor": "#963202"
 }

@@ -1,5 +1,6 @@
 {
   "item": "minecraft:glowstone_dust",
+  "modifier": "none",
   "path": [
     "south",
     "east",
@@ -11,5 +12,7 @@
     "water": 0.1,
     "earth": 0.5554
   },
-  "color": "#FFF7CC"
+  "lightestColor": "#f9d49c",
+  "middleColor": "#ffbc5e",
+  "darkestColor": "#5a391c"
 }

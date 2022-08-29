@@ -13,9 +13,11 @@ import java.util.List;
 
 public class Path {
     List<PathProgressData> directionMap;
+    PathModifier modifier;
 
-    public Path() {
+    public Path(PathModifier pModifier) {
         directionMap = new ArrayList<>();
+        modifier = pModifier;
     }
 
     public boolean isEmpty(){
@@ -40,6 +42,10 @@ public class Path {
         }
     }
 
+    public List<PathProgressData> getDirectionMap() {
+        return directionMap;
+    }
+
     public float getProgress(List<Direction> dir){
         for(PathProgressData data : directionMap){
             if(data.getPath().equals(dir)){
@@ -58,6 +64,10 @@ public class Path {
         return directions;
     }
 
+    public PathModifier getModifier(){
+        return modifier;
+    }
+
     public void addPath(Path path) {
         directionMap.addAll(path.directionMap);
     }
@@ -73,11 +83,16 @@ public class Path {
             list.add(data.toNBT());
         }
         tag.put("directionsList", list);
+        if(modifier != null){
+            tag.putInt("modifier", modifier.ordinal());
+        } else {
+            tag.putInt("modifier", 0);
+        }
         return tag;
     }
 
     public static Path fromNBT(CompoundTag tag) {
-        Path path = new Path();
+        Path path = new Path(PathModifier.values()[tag.getInt("modifier")]);
         ListTag list = tag.getList("directionsList", 10);
         for(int i = 0; i < list.size(); i++){
             CompoundTag directionCompound = list.getCompound(i);
@@ -89,19 +104,25 @@ public class Path {
     public String getProgress() {
         StringBuilder progress = new StringBuilder();
         float percent = 0;
-        for(PathProgressData data : directionMap){
-            percent += data.getProgress();
+//        for(PathProgressData data : directionMap){
+//            percent += data.getProgress();
+//        }
+        for(int i = 0; i < directionMap.size(); i++){
+            if(i != 0) percent += directionMap.get(i).getProgress();
+            else percent += 100f/directionMap.size();
         }
-        progress.append(Math.min(100, percent));
+        progress.append((int)Math.min(100, percent));
+        progress.append("%");
         return progress.toString().toUpperCase(Locale.ROOT);
     }
 
     public float getFlatProgress() {
         float percent = 0;
-        for(PathProgressData data : directionMap){
-            percent += data.getProgress();
+        for(int i = 0; i < directionMap.size(); i++){
+            if(i != 0) percent += directionMap.get(i).getProgress();
+            else percent += 100f/directionMap.size();
         }
-        return percent;
+        return Math.round(percent);
     }
 
 }

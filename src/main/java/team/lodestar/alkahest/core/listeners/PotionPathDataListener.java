@@ -39,6 +39,7 @@ public class PotionPathDataListener extends SimpleJsonResourceReloadListener {
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         POTION_PATH_DATA.clear();
+        potionMap.clear();
         Alkahest.LOGGER.info("Loading potion path data...");
         for(int i = 0; i < pObject.size(); i++){
             ResourceLocation key = (ResourceLocation) pObject.keySet().toArray()[i];

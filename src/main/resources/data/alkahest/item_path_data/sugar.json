@@ -1,5 +1,6 @@
 {
   "item": "minecraft:sugar",
+  "modifier": "none",
   "path": [
     "east",
     "up"
@@ -10,5 +11,7 @@
     "water": 1,
     "earth": 1
   },
-  "color": "#FFFFFF"
+  "lightestColor": "#ffffff",
+  "middleColor": "#ffffff",
+  "darkestColor": "#ffffff"
 }

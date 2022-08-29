@@ -1,9 +1,7 @@
 package team.lodestar.alkahest.core.path;
 
 import net.minecraft.core.Direction;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import team.lodestar.lodestone.setup.LodestoneRenderTypeRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +43,7 @@ public class IngredientPathUtils {
         return vec;
     }
 
-    public static List<Vec3> addPathToNodeList(List<Vec3> nodes, Path path){
+    public static void addPathToNodeList(List<Vec3> nodes, Path path){
         List<List<Direction>> directions = path.getAllDirections();
         Vec3 vec = Vec3.ZERO;
         if(nodes.size() > 0){
@@ -55,7 +53,6 @@ public class IngredientPathUtils {
             vec = vec.add(getVecAtPoint(dir, path));
             nodes.add(vec);
         }
-        return nodes;
     }
 
     public static List<Vec3> pathPoints(Path path){

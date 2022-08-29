@@ -1,3 +1,6 @@
 {
-  "item.alkahest.crushed_item.percentage_tooltip": "Crush: "
+  "item.alkahest.crushed_item.percentage_tooltip": "Crush: ",
+  "item.alkahest.pestle": "Pestle",
+  "block.alkahest.mortar": "Mortar",
+  "block.alkahest.cauldron": "Cauldron"
 }

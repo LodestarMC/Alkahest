@@ -8,12 +8,14 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import team.lodestar.alkahest.Alkahest;
 import team.lodestar.alkahest.core.alchemy.Element;
 import team.lodestar.alkahest.core.path.DirectionData;
 import team.lodestar.alkahest.core.path.ItemPathData;
 import team.lodestar.alkahest.core.path.Path;
+import team.lodestar.alkahest.core.path.PathModifier;
 
 import java.util.*;
 
@@ -48,7 +50,8 @@ public class ItemPathDataListener extends SimpleJsonResourceReloadListener {
                 Alkahest.LOGGER.warn("Duplicate path data for item {}", resourceLocation);
             }
             JsonArray path = object.getAsJsonArray("path");
-            Path p = new Path();
+            String modifier = object.getAsJsonPrimitive("modifier").getAsString();
+            Path p = new Path(PathModifier.valueOf(modifier.toUpperCase(Locale.ROOT)));
             for(int j = 0; j < path.size(); j++) {
                 JsonElement direction = path.get(j);
                 if(direction.isJsonArray()){
@@ -72,7 +75,11 @@ public class ItemPathDataListener extends SimpleJsonResourceReloadListener {
                     }
                 } else {
                     if(Direction.byName(direction.getAsString()) != null) {
-                        p.add(Collections.singletonList(Direction.byName(direction.getAsString())));
+                        if(p.isEmpty()) {
+                            p.add(Collections.singletonList(Direction.byName(direction.getAsString())), 100f/path.size());
+                        } else {
+                            p.add(Collections.singletonList(Direction.byName(direction.getAsString())));
+                        }
                     } else {
                         Alkahest.LOGGER.warn("Invalid direction {} for item {}", direction.getAsString(), item.getName(item.getDefaultInstance()).getString());
                     }
@@ -88,10 +95,20 @@ public class ItemPathDataListener extends SimpleJsonResourceReloadListener {
                 }
                 elementData.put(element, Math.round(entry.getValue().getAsFloat() * 10) / 10.0f);
             }
-            int color = Integer.parseInt(object.getAsJsonPrimitive("color").getAsString().replaceFirst("#", ""), 16);
-            ItemPathData itemPathData = new ItemPathData(new DirectionData(p), elementData, color);
+            int lightestColor = Integer.parseInt(object.getAsJsonPrimitive("lightestColor").getAsString().replaceFirst("#", ""), 16);
+            int darkestColor = Integer.parseInt(object.getAsJsonPrimitive("darkestColor").getAsString().replaceFirst("#", ""), 16);
+            int middleColor = Integer.parseInt(object.getAsJsonPrimitive("middleColor").getAsString().replaceFirst("#", ""), 16);
+            ItemPathData itemPathData = new ItemPathData(new DirectionData(p), elementData, lightestColor, middleColor, darkestColor);
             ITEM_PATH_DATA.put(item, itemPathData);
             Alkahest.LOGGER.info("Path data for " + item.getName(item.getDefaultInstance()).getString() + " loaded, Path: " + itemPathData.dirs.getDirections() + ", Elements: " + itemPathData.getElementsString());
         }
+    }
+
+    public static Path getPathForItem(ItemStack stack){
+        Item item = stack.getItem();
+        if(ITEM_PATH_DATA.containsKey(item)){
+            return ITEM_PATH_DATA.get(item).getPath();
+        }
+        return null;
     }
 }

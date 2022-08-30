@@ -1,0 +1,23 @@
+{
+  "name": "alkahest:a",
+  "category": "beneficial",
+  "effects": [
+    {
+      "name": "minecraft:dolphins_grace",
+      "duration": 236,
+      "amplifier": 2
+    }
+  ],
+  "location": {
+    "x": -1,
+    "y": 0,
+    "z": 0
+  },
+  "radius": 0.5,
+  "color": {
+    "r": 0,
+    "g": 255,
+    "b": 255,
+    "a": 125
+  }
+}

@@ -1,7 +1,8 @@
 {
   "name": "alkahest:flying_scotsman",
+  "category": "harmful",
   "effects": [
-    {"name":  "minecraft:strength", "duration":  400, "amplifier":  10},
+    {"name":  "minecraft:nausea", "duration":  400, "amplifier":  10},
     {"name":  "minecraft:levitation", "duration":  500, "amplifier": 10}
   ],
   "location": {

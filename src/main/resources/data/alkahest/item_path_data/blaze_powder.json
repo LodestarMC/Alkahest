@@ -1,5 +1,7 @@
 {
   "item": "minecraft:blaze_powder",
+  "instruction": "random_flip",
+  "power": 2,
   "modifier": "flip_all",
   "path": [
     ["east", "down", "south"],

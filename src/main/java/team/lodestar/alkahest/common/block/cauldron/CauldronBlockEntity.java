@@ -1,14 +1,19 @@
 package team.lodestar.alkahest.common.block.cauldron;
 
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.TagTypes;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -17,6 +22,10 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.PacketDistributor;
+import team.lodestar.alkahest.Alkahest;
+import team.lodestar.alkahest.core.alchemy.PotionMap;
+import team.lodestar.alkahest.core.alchemy.PotionMapInstruction;
+import team.lodestar.alkahest.core.alchemy.PotionMapInstructions;
 import team.lodestar.alkahest.core.handlers.AlkahestPacketHandler;
 import team.lodestar.alkahest.core.listeners.PotionPathDataListener;
 import team.lodestar.alkahest.core.net.ClientboundCauldronPacket;
@@ -27,8 +36,10 @@ import team.lodestar.lodestone.systems.blockentity.ItemHolderBlockEntity;
 import team.lodestar.lodestone.systems.blockentity.LodestoneBlockEntityInventory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.IntFunction;
 
 public class CauldronBlockEntity extends ItemHolderBlockEntity {
     public List<Path> paths = new ArrayList();
@@ -38,6 +49,9 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
     public double previousVisualPercentage = 0;
     public double visualPercentage = 0;
     public boolean flipped = false;
+    public PotionMap unmodifiedPotionMap = PotionMap.EMPTY;
+    public PotionMap mutablePotionMap = PotionMap.EMPTY;
+    public List<Pair<Integer,IntFunction<PotionMapInstruction>>> instructions = new ArrayList<>();
 
     public CauldronBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -72,8 +86,21 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
     }
 
     @Override
+    public void onPlace(LivingEntity placer, ItemStack stack) {
+        unmodifiedPotionMap.copy(PotionPathDataListener.potionMap);
+        super.onPlace(placer, stack);
+    }
+
+    @Override
     public void tick() {
         super.tick();
+        if(!unmodifiedPotionMap.map.equals(PotionPathDataListener.potionMap.map)){
+            unmodifiedPotionMap.copy(PotionPathDataListener.potionMap);
+            mutablePotionMap = unmodifiedPotionMap;
+            for (Pair<Integer, IntFunction<PotionMapInstruction>> instruction : instructions) {
+                mutablePotionMap = instruction.getSecond().apply(instruction.getFirst()).instruction.apply(mutablePotionMap);
+            }
+        }
         if (progress < 4) {
             progress++;
         }
@@ -82,7 +109,6 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
         }
         previousVisualPercentage = visualPercentage;
         visualPercentage = Mth.lerp(0.5f, visualPercentage, progress / 4);
-
     }
 
     // TODO: allow uncrushed items to be added to the cauldron and have first step in path be used
@@ -120,6 +146,8 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
                             progress = 0;
                         }
                     }
+                    PotionMapInstructions.instructions.get(path.getInstruction()).apply(path.getPower()).instruction.apply(mutablePotionMap);
+                    instructions.add(Pair.of(path.getPower(), PotionMapInstructions.instructions.get(path.getInstruction())));
                 }
             }
         }
@@ -127,6 +155,11 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
         AlkahestPacketHandler.INSTANCE.send(PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), 128, this.level.dimension())), new ClientboundCauldronPacket(worldPosition, paths, containedPotionNames));
     }
 
+    // TODO: to ignore next points, store a pair<int, int> that determines the the beginning and end of the path to skip debuffs for
+    // TODO: do the same for editing translation distances.
+    /*
+    TODO: add an extra param to addPathToNodeList for the above for "scale",
+     */
     public void checkPotionIntersections() {
         containedPotions.clear();
         containedPotionNames.clear();
@@ -136,7 +169,7 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
             IngredientPathUtils.addPathToNodeList(passPoints, p);
         }
         for (Vec3 node : passPoints) {
-            PotionPathData potion = PotionPathDataListener.potionMap.isInRadius(node);
+            PotionPathData potion = mutablePotionMap.isInRadius(node);
             if (potion != null) {
                 if(!containedPotions.contains(potion)) {
                     containedPotions.add(potion);
@@ -170,6 +203,23 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
         compound.putDouble("progress", progress);
         compound.putDouble("previousVisualPercentage", previousVisualPercentage);
         compound.putDouble("visualPercentage", visualPercentage);
+        compound.putBoolean("flipped", flipped);
+        compound.put("unmodifiedPotionMap", unmodifiedPotionMap.toNbt());
+        compound.put("mutablePotionMap", mutablePotionMap.toNbt());
+        if (!instructions.isEmpty()) {
+            ListTag list = new ListTag();
+            for (Pair<Integer, IntFunction<PotionMapInstruction>> p : instructions) {
+                for (String rl : PotionMapInstructions.instructions.keySet()){
+                    if(PotionMapInstructions.instructions.get(rl).equals(p.getSecond())){
+                        CompoundTag tag = new CompoundTag();
+                        tag.putString("instruction", rl.toString());
+                        tag.putInt("power", p.getFirst());
+                        list.add(tag);
+                    }
+                }
+            }
+            compound.put("instructions", list);
+        }
         super.saveAdditional(compound);
     }
 
@@ -192,6 +242,17 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
         progress = compound.getDouble("progress");
         previousVisualPercentage = compound.getDouble("previousVisualPercentage");
         visualPercentage = compound.getDouble("visualPercentage");
+        flipped = compound.getBoolean("flipped");
+        unmodifiedPotionMap = PotionMap.fromNbt(compound.getCompound("unmodifiedPotionMap"));
+        mutablePotionMap = PotionMap.fromNbt(compound.getCompound("mutablePotionMap"));
+        instructions.clear();
+        if (compound.contains("instructions")) {
+            ListTag list = compound.getList("instructions", 10);
+            for (int i = 0; i < list.size(); i++) {
+                CompoundTag tag = list.getCompound(i);
+                instructions.add(new Pair<>(tag.getInt("power"), PotionMapInstructions.instructions.get(tag.getString("instruction"))));
+            }
+        }
         super.load(compound);
     }
 }

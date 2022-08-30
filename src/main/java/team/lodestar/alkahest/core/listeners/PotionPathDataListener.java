@@ -10,6 +10,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.phys.Vec3;
@@ -19,10 +20,7 @@ import team.lodestar.alkahest.core.alchemy.PotionMap;
 import team.lodestar.alkahest.core.path.PotionPathData;
 import team.lodestar.lodestone.helpers.util.Color;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PotionPathDataListener extends SimpleJsonResourceReloadListener {
     public static Map<ResourceLocation, PotionPathData> POTION_PATH_DATA = new HashMap<>();
@@ -73,7 +71,8 @@ public class PotionPathDataListener extends SimpleJsonResourceReloadListener {
             int g = color.getAsJsonPrimitive("g").getAsInt();
             int b = color.getAsJsonPrimitive("b").getAsInt();
             int a = color.getAsJsonPrimitive("a").getAsInt();
-            PotionPathData potionPathData = new PotionPathData(effectList, vec3, radius, new Color(r,g,b,a));
+            MobEffectCategory category = MobEffectCategory.valueOf(object.getAsJsonPrimitive("category").getAsString().toUpperCase(Locale.ROOT));
+            PotionPathData potionPathData = new PotionPathData(effectList, vec3, radius, new Color(r,g,b,a), category);
             POTION_PATH_DATA.put(resourceLocation, potionPathData);
             List<PotionPathData> potionPathDataList = new ArrayList<>();
             for(PotionPathData potionPathData1 : POTION_PATH_DATA.values()){

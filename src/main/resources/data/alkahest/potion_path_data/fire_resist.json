@@ -1,5 +1,6 @@
 {
   "name": "alkahest:fire_resist_poison",
+  "category": "beneficial",
   "effects": [
     {
       "name": "minecraft:fire_resistance",
@@ -7,7 +8,7 @@
       "amplifier": 2
     },
     {
-      "name": "minecraft:poison",
+      "name": "minecraft:regeneration",
       "duration": 100,
       "amplifier": 7
     }

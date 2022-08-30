@@ -6,6 +6,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.item.Rarity;
+import team.lodestar.alkahest.Alkahest;
+import team.lodestar.alkahest.core.alchemy.PotionMapInstruction;
+import team.lodestar.alkahest.core.alchemy.PotionMapInstructions;
 
 import java.awt.*;
 import java.util.*;
@@ -14,6 +17,8 @@ import java.util.List;
 public class Path {
     List<PathProgressData> directionMap;
     PathModifier modifier;
+    String instruction;
+    int power;
 
     public Path(PathModifier pModifier) {
         directionMap = new ArrayList<>();
@@ -22,6 +27,11 @@ public class Path {
 
     public boolean isEmpty(){
         return directionMap.isEmpty();
+    }
+
+    public void setInstruction(String pInstruction, int power){
+        instruction = pInstruction;
+        this.power = power;
     }
 
     public void add(List<Direction> directions, float progress) {
@@ -68,6 +78,15 @@ public class Path {
         return modifier;
     }
 
+    public String getInstruction(){
+        Alkahest.LOGGER.error("Instruction: " + instruction);
+        return instruction;
+    }
+
+    public int getPower(){
+        return power;
+    }
+
     public void addPath(Path path) {
         directionMap.addAll(path.directionMap);
     }
@@ -88,6 +107,12 @@ public class Path {
         } else {
             tag.putInt("modifier", 0);
         }
+        if(instruction != null){
+            CompoundTag instructionTag = new CompoundTag();
+            instructionTag.putString("instruction", instruction);
+            instructionTag.putInt("power", power);
+            tag.put("instruction", instructionTag);
+        }
         return tag;
     }
 
@@ -97,6 +122,11 @@ public class Path {
         for(int i = 0; i < list.size(); i++){
             CompoundTag directionCompound = list.getCompound(i);
             path.directionMap.add(PathProgressData.fromNBT(directionCompound));
+        }
+        if(tag.contains("instruction")){
+            CompoundTag instructionTag = tag.getCompound("instruction");
+            path.instruction = instructionTag.getString("instruction");
+            path.power = instructionTag.getInt("power");
         }
         return path;
     }

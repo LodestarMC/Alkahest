@@ -3,22 +3,24 @@ package team.lodestar.alkahest.client.render;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
+import com.mojang.math.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 import team.lodestar.lodestone.helpers.util.Color;
+import team.lodestar.lodestone.setup.LodestoneRenderTypeRegistry;
+
+import static team.lodestar.lodestone.handlers.RenderHandler.DELAYED_RENDER;
 
 
 public class PotionMapRenderHelper {
     public static void drawLineBetween(MultiBufferSource buffer, PoseStack mstack, Vec3 local, Vec3 target, float lineWidth, int r, int g, int b, int a) {
-        VertexConsumer builder = buffer.getBuffer(RenderType.leash());
+        VertexConsumer builder = DELAYED_RENDER.getBuffer(RenderType.leash());
 
         //Calculate yaw
         float rotY = (float) Mth.atan2(target.x - local.x, target.z - local.z);
@@ -57,7 +59,7 @@ public class PotionMapRenderHelper {
     }
 
     public static void draw2DLineBetween(MultiBufferSource buff, PoseStack ps, Vec3 local, Vec3 target, float lineWidth, int r, int g, int b, int a){
-        VertexConsumer builder = buff.getBuffer(RenderType.lines());
+        VertexConsumer builder = DELAYED_RENDER.getBuffer(RenderType.lines());
         Matrix4f matrix = ps.last().pose();
         RenderSystem.lineWidth(lineWidth);
         builder.vertex(matrix, (float) local.x, (float) local.y, (float) local.z).color(r, g, b, a).uv(0,1).overlayCoords(0).uv2(15728640).normal(0,1,0).endVertex();
@@ -68,7 +70,7 @@ public class PotionMapRenderHelper {
         ps.pushPose();
         ps.translate((Math.floor(size / 2)), 0, (Math.floor(size / 2)));
         ps.mulPose(Vector3f.XP.rotationDegrees(90));
-        VertexConsumer buff = buffer.getBuffer(renderType);
+        VertexConsumer buff = DELAYED_RENDER.getBuffer(renderType);
         renderQuad(ps, size, buff);
         ps.mulPose(Vector3f.XP.rotationDegrees(90));
         ps.translate(0, size, 0);
@@ -99,7 +101,7 @@ public class PotionMapRenderHelper {
         ps.pushPose();
         ps.translate(-(Math.floor(size / 2)), 0, -(Math.floor(size / 2)));
         ps.mulPose(Vector3f.XP.rotationDegrees(90));
-        VertexConsumer buff = buffer.getBuffer(renderType);
+        VertexConsumer buff = DELAYED_RENDER.getBuffer(renderType);
         renderQuad(ps, size, buff);
         ps.mulPose(Vector3f.XP.rotationDegrees(90));
         ps.translate(0, -size, 0);
@@ -123,7 +125,7 @@ public class PotionMapRenderHelper {
         ps.pushPose();
         ps.translate(-size / 2, 0, -size / 2);
         ps.mulPose(Vector3f.XP.rotationDegrees(90));
-        VertexConsumer buff = buffer.getBuffer(renderType);
+        VertexConsumer buff = DELAYED_RENDER.getBuffer(renderType);
         renderQuad(ps, size, buff, color);
         ps.mulPose(Vector3f.XP.rotationDegrees(90));
         ps.translate(0, -size, 0);
@@ -141,6 +143,32 @@ public class PotionMapRenderHelper {
         ps.translate(-size, 0, size);
         renderQuad(ps, size, buff, color);
         ps.popPose();
+    }
+
+    /**
+     * Renders a billboarded translucent magenta square. Useful for preventing insanity.
+     */
+    public static void renderTest(PoseStack stack, MultiBufferSource buffer) {
+
+        RenderType type = LodestoneRenderTypeRegistry.TRANSPARENT_SOLID;
+        VertexConsumer builder = buffer.getBuffer(type);
+        Vector4f center = new Vector4f(0, 0, 0, 1);
+        center.transform(stack.last().pose());
+        Matrix3f normal = stack.last().normal();
+        float xp = center.x() + 0.5F;
+        float xn = center.x() - 0.5F;
+        float yp = center.y() + 0.5F;
+        float yn = center.y() - 0.5F;
+        float z = center.z();
+        int r = 255;
+        int g = 0;
+        int b = 255;
+        int a = 128;
+        int packedLight = 0x00F000F0;
+        builder.vertex(xp, yp, z).color(r, g, b, a).uv(0, 0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 1, 0).endVertex();
+        builder.vertex(xn, yp, z).color(r, g, b, a).uv(0, 1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 1, 0).endVertex();
+        builder.vertex(xn, yn, z).color(r, g, b, a).uv(1, 1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 1, 0).endVertex();
+        builder.vertex(xp, yn, z).color(r, g, b, a).uv(1, 0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 1, 0).endVertex();
     }
 
     public static void renderQuad(PoseStack ps, float size, VertexConsumer buff, Color color) {

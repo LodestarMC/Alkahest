@@ -1,5 +1,7 @@
 {
   "item": "minecraft:phantom_membrane",
+  "instruction": "none",
+  "power": 1,
   "modifier": "flip",
   "path": [
     "north",

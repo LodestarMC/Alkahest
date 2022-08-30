@@ -1,5 +1,7 @@
 {
   "item": "minecraft:sugar",
+  "instruction": "none",
+  "power": 1,
   "modifier": "none",
   "path": [
     "east",

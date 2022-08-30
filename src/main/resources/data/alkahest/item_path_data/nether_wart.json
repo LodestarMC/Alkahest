@@ -1,5 +1,7 @@
 {
   "item": "minecraft:nether_wart",
+  "instruction": "none",
+  "power": 1,
   "modifier": "none",
   "path": [
     "up"

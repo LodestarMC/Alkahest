@@ -3,6 +3,7 @@ package team.lodestar.alkahest.core.path;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -16,12 +17,33 @@ public class PotionPathData {
     public Vec3 location;
     public float radius;
     public Color color;
+    public MobEffectCategory category;
 
-    public PotionPathData(List<MobEffectInstance> effects, Vec3 location, float radius, Color color) {
+    public PotionPathData(List<MobEffectInstance> effects, Vec3 location, float radius, Color color, MobEffectCategory category) {
         this.effects = effects;
         this.location = location;
         this.radius = radius;
         this.color = color;
+        this.category = category;
+    }
+
+    public boolean equals(PotionPathData data){
+        if(!this.effects.equals(data.effects)){
+            return false;
+        }
+        if(!this.location.equals(data.location)){
+            return false;
+        }
+        if(this.radius != data.radius){
+            return false;
+        }
+        if(!this.color.equals(data.color)){
+            return false;
+        }
+        if(this.category != data.category){
+            return false;
+        }
+        return true;
     }
 
     public CompoundTag toNbt() {
@@ -43,6 +65,7 @@ public class PotionPathData {
         tag.putFloat("radius", radius);
         tag.putInt("color", color.getRGB());
         tag.putInt("alpha", color.getAlpha());
+        tag.putInt("category", category.ordinal());
         return tag;
     }
 
@@ -63,7 +86,8 @@ public class PotionPathData {
         int intcol = tag.getInt("color");
         Color color = new Color(intcol);
         color.setAlpha(tag.getInt("alpha"));
-        return new PotionPathData(effects, location, radius, color);
+        MobEffectCategory category = MobEffectCategory.values()[tag.getInt("category")];
+        return new PotionPathData(effects, location, radius, color, category);
     }
 
     public List<MobEffectInstance> getEffects() {

@@ -16,6 +16,7 @@ import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
+import team.lodestar.alkahest.core.alchemy.PotionMapInstructions;
 import team.lodestar.alkahest.core.handlers.AlkahestPacketHandler;
 
 import java.util.stream.Collectors;
@@ -35,28 +36,23 @@ public class Alkahest {
 
     public Alkahest() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
-        // Register the enqueueIMC method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::enqueueIMC);
-        // Register the processIMC method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::processIMC);
         RECIPE_SERIALIZERS.register(modEventBus);
         BLOCK_ENTITY_TYPES.register(modEventBus);
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
+        PotionMapInstructions.setup();
         AlkahestPacketHandler.init();
-        // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
     }
 
     private void setup(final FMLCommonSetupEvent event) {
-        // Some preinit code
         LOGGER.info("Alkahest Loading");
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event) {
-        // Some example code to dispatch IMC to another mod
         InterModComms.sendTo("alkahest", "helloworld", () -> {
             LOGGER.info("Hello world from the MDK");
             return "Hello world";
@@ -64,7 +60,6 @@ public class Alkahest {
     }
 
     private void processIMC(final InterModProcessEvent event) {
-        // Some example code to receive and process InterModComms from other mods
         LOGGER.info("Got IMC {}", event.getIMCStream().
                 map(m -> m.messageSupplier().get()).
                 collect(Collectors.toList()));
@@ -73,7 +68,6 @@ public class Alkahest {
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
-        // Do something when the server starts
         LOGGER.info("Alkahest Server Starting");
     }
 
@@ -81,11 +75,6 @@ public class Alkahest {
     // Event bus for receiving Registry Events)
     @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
     public static class RegistryEvents {
-        @SubscribeEvent
-        public static void onBlocksRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {
-            // Register a new block here
-            LOGGER.info("Alkahest Registering Blocks");
-        }
     }
 
     public static ResourceLocation alkahest(String name) {

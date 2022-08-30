@@ -37,6 +37,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static team.lodestar.lodestone.handlers.RenderHandler.DELAYED_RENDER;
+
 public class CauldronRenderer implements BlockEntityRenderer<CauldronBlockEntity> {
     Font font;
     List<Vec3> passPoints;
@@ -81,12 +83,22 @@ public class CauldronRenderer implements BlockEntityRenderer<CauldronBlockEntity
                 ps.popPose();
             }
         }
-        for (PotionPathData data : PotionPathDataListener.potionMap.getMap()) {
+        for (PotionPathData data : pBlockEntity.mutablePotionMap.getMap()) {
             ps.pushPose();
             ps.translate(data.location.x - (data.radius/2f), data.location.y - (data.radius/2f), data.location.z - (data.radius/2f));
 //            ItemStack potion = Registry.ITEM.get(ResourceLocation.tryParse("minecraft:potion")).getDefaultInstance();
 //            PotionUtils.setCustomEffects(potion, data.getEffects());
+            Color color = data.getColor();
             PotionMapRenderHelper.renderInvertedCube(ps, pBufferSource, data.radius, renderType, data.getColor());
+            String did = data.effects.get(0).effect.getDescriptionId().replaceFirst("(?:\\.)+", "=");
+            String rl = did.substring(did.indexOf("=")+1).replaceAll("\\.", ":");
+            String effect = rl.trim().split(":")[1];
+            String modID = rl.trim().split(":")[0];
+            RenderType test = LodestoneRenderTypeRegistry.TRANSPARENT_TEXTURE.applyAndCache(ResourceLocation.tryParse(modID + ":textures/mob_effect/" + effect + ".png"));
+            ps.mulPose(Vector3f.ZN.rotationDegrees(180f));
+            ps.translate(-data.radius/3f, -data.radius/1.125f, 0);
+            ps.scale(data.radius*0.75f, data.radius*0.75f, data.radius*0.75f);
+            PotionMapRenderHelper.renderQuad(ps, 1, DELAYED_RENDER.getBuffer(test), Color.WHITE);
             ps.popPose();
         }
         ps.popPose();

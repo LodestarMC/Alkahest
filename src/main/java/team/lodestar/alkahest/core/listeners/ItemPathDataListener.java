@@ -51,6 +51,8 @@ public class ItemPathDataListener extends SimpleJsonResourceReloadListener {
             }
             JsonArray path = object.getAsJsonArray("path");
             String modifier = object.getAsJsonPrimitive("modifier").getAsString();
+            String instruction = object.getAsJsonPrimitive("instruction").getAsString();
+            int power = object.getAsJsonPrimitive("power").getAsInt();
             Path p = new Path(PathModifier.valueOf(modifier.toUpperCase(Locale.ROOT)));
             for(int j = 0; j < path.size(); j++) {
                 JsonElement direction = path.get(j);
@@ -98,6 +100,7 @@ public class ItemPathDataListener extends SimpleJsonResourceReloadListener {
             int lightestColor = Integer.parseInt(object.getAsJsonPrimitive("lightestColor").getAsString().replaceFirst("#", ""), 16);
             int darkestColor = Integer.parseInt(object.getAsJsonPrimitive("darkestColor").getAsString().replaceFirst("#", ""), 16);
             int middleColor = Integer.parseInt(object.getAsJsonPrimitive("middleColor").getAsString().replaceFirst("#", ""), 16);
+            p.setInstruction(instruction, power);
             ItemPathData itemPathData = new ItemPathData(new DirectionData(p), elementData, lightestColor, middleColor, darkestColor);
             ITEM_PATH_DATA.put(item, itemPathData);
             Alkahest.LOGGER.info("Path data for " + item.getName(item.getDefaultInstance()).getString() + " loaded, Path: " + itemPathData.dirs.getDirections() + ", Elements: " + itemPathData.getElementsString());

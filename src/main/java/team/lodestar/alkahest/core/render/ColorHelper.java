@@ -1,10 +1,17 @@
 package team.lodestar.alkahest.core.render;
 
 
+import net.minecraft.util.FastColor;
 import team.lodestar.lodestone.helpers.util.Color;
 
 public class ColorHelper {
     public static float FACTOR = 0.7f;
+    public static Color getColor(int decimal) {
+        int red = FastColor.ARGB32.red(decimal);
+        int green = FastColor.ARGB32.green(decimal);
+        int blue = FastColor.ARGB32.blue(decimal);
+        return new Color(red, green, blue);
+    }
     public static int hexToARGB(String hex) {
         Long intval = Long.decode(hex.replaceFirst("#", "0x"));
         long i = intval.intValue();

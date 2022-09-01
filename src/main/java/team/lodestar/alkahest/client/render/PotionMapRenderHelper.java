@@ -12,6 +12,9 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
+import org.lwjgl.opengl.GL11;
+import team.lodestar.alkahest.Alkahest;
+import team.lodestar.alkahest.registry.client.RenderTypeRegistry;
 import team.lodestar.lodestone.helpers.util.Color;
 import team.lodestar.lodestone.setup.LodestoneRenderTypeRegistry;
 
@@ -55,15 +58,23 @@ public class PotionMapRenderHelper {
         builder.vertex(matrix, 0, halfWidth, 0).color(r, g, b, a).uv2(0xF000F0).endVertex();
         builder.vertex(matrix, 0, halfWidth, distance).color(r, g, b, a).uv2(0xF000F0).endVertex();
         builder.vertex(matrix, 0, -halfWidth, distance).color(r, g, b, a).uv2(0xF000F0).endVertex();
+        builder = DELAYED_RENDER.getBuffer(RenderType.LINES);
         mstack.popPose();
     }
 
-    public static void draw2DLineBetween(MultiBufferSource buff, PoseStack ps, Vec3 local, Vec3 target, float lineWidth, int r, int g, int b, int a){
-        VertexConsumer builder = DELAYED_RENDER.getBuffer(RenderType.lines());
+    // TODO: blockpos + (local.scale(0.35f)) and blockpos + (target * 0.35f)
+    public static void draw2DLineBetween(MultiBufferSource buff, PoseStack ps, Vec3 local, Vec3 target, float lineWidth, int r, int g, int b, int a, Vec3 blockpos, Vec3 translation){
+        ps.pushPose();
+        VertexConsumer builder = DELAYED_RENDER.getBuffer(RenderType.lineStrip());
         Matrix4f matrix = ps.last().pose();
         RenderSystem.lineWidth(lineWidth);
-        builder.vertex(matrix, (float) local.x, (float) local.y, (float) local.z).color(r, g, b, a).uv(0,1).overlayCoords(0).uv2(15728640).normal(0,1,0).endVertex();
-        builder.vertex(matrix, (float) target.x, (float) target.y, (float) target.z).color(r, g, b, a).uv(0,1).overlayCoords(0).uv2(15728640).normal(0,1,0).endVertex();
+        Vec3 center = blockpos.add(0.5, 1.5, 0.5);
+        double localActualDistance = Minecraft.getInstance().player.getEyePosition().distanceTo(center);
+        float localDistanceFactor = (float) Math.max(0, Math.min(10, (localActualDistance)));
+        builder.vertex(matrix, (float) local.x, (float) local.y, (float) local.z).color(255f/r, 255f/g, 255f/b, 1).uv(0,1).overlayCoords(0).uv2(15728640).normal(0,0,0).endVertex();
+        builder.vertex(matrix, (float) target.x, (float) target.y, (float) target.z).color(255f/r, 255f/g, 255f/b, 1).uv(0,1).overlayCoords(0).uv2(15728640).normal(0,0,0).endVertex();
+        builder = DELAYED_RENDER.getBuffer(RenderType.LINES);
+        ps.popPose();
     }
 
     public static void renderNormalCuboid(PoseStack ps, MultiBufferSource buffer, float size, RenderType renderType) {

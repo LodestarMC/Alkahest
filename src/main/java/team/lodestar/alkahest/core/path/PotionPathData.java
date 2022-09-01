@@ -27,6 +27,15 @@ public class PotionPathData {
         this.category = category;
     }
 
+    @Override
+    public PotionPathData clone(){
+        List<MobEffectInstance> newEffects = new ArrayList<>();
+        for(MobEffectInstance effect : effects){
+            newEffects.add(new MobEffectInstance(effect));
+        }
+        return new PotionPathData(newEffects, location, radius, color, category);
+    }
+
     public boolean equals(PotionPathData data){
         if(!this.effects.equals(data.effects)){
             return false;

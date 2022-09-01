@@ -2,13 +2,11 @@ package team.lodestar.alkahest.common.block.cauldron;
 
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.TagTypes;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -20,9 +18,20 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fluids.FluidAttributes;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.IFluidTank;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.minecraftforge.network.PacketDistributor;
-import team.lodestar.alkahest.Alkahest;
+import org.jetbrains.annotations.NotNull;
+import team.lodestar.alkahest.client.render.PotionMapRenderHelper;
 import team.lodestar.alkahest.core.alchemy.PotionMap;
 import team.lodestar.alkahest.core.alchemy.PotionMapInstruction;
 import team.lodestar.alkahest.core.alchemy.PotionMapInstructions;
@@ -35,15 +44,12 @@ import team.lodestar.lodestone.helpers.BlockHelper;
 import team.lodestar.lodestone.systems.blockentity.ItemHolderBlockEntity;
 import team.lodestar.lodestone.systems.blockentity.LodestoneBlockEntityInventory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.IntFunction;
 
 public class CauldronBlockEntity extends ItemHolderBlockEntity {
-    public List<Path> paths = new ArrayList();
-    public List<PotionPathData> containedPotions = new ArrayList();
+    public List<Path> paths = new ArrayList<>();
+    public List<PotionPathData> containedPotions = new ArrayList<>();
     public List<String> containedPotionNames = new ArrayList<>();
     public double progress = 0;
     public double previousVisualPercentage = 0;
@@ -51,7 +57,11 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
     public boolean flipped = false;
     public PotionMap unmodifiedPotionMap = PotionMap.EMPTY;
     public PotionMap mutablePotionMap = PotionMap.EMPTY;
-    public List<Pair<Integer,IntFunction<PotionMapInstruction>>> instructions = new ArrayList<>();
+    public List<Pair<Integer, IntFunction<PotionMapInstruction>>> instructions = new ArrayList<>();
+    public boolean expanded = false;
+    public int visionArea = 3;
+    public FluidTank tank = new FluidTank(FluidAttributes.BUCKET_VOLUME);
+    private final LazyOptional<IFluidHandler> holder = LazyOptional.of(() -> tank);
 
     public CauldronBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -66,46 +76,77 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
                 BlockHelper.updateAndNotifyState(level, pos);
             }
         };
+        Path init = new Path(PathModifier.NONE);
+        init.getDirectionMap().add(new PathProgressData(0, List.of(Direction.DOWN)));
+        paths.add(init);
     }
 
     @Override
     public InteractionResult onUse(Player player, InteractionHand hand) {
-        if (player.getItemInHand(hand).is(Items.POTION)) {
-            ItemStack stack = player.getItemInHand(hand);
-            List<MobEffectInstance> effects = new ArrayList<>();
-            for (PotionPathData data : containedPotions) {
-                effects.addAll(data.effects);
+        LazyOptional<IFluidHandlerItem> itemCap = player.getItemInHand(hand).getCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY);
+        if(itemCap.isPresent()){
+            IFluidHandlerItem handler = itemCap.orElseThrow(() -> new IllegalStateException("Fluid handler is not present"));
+            if(tank.fill(handler.drain(FluidAttributes.BUCKET_VOLUME, IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE) > 0){
+                if(!handler.getContainer().sameItem(player.getItemInHand(hand))){
+                    player.setItemInHand(hand, handler.getContainer());
+                }
+                return InteractionResult.SUCCESS;
+            } else {
+                return InteractionResult.FAIL;
             }
-            PotionUtils.setCustomEffects(stack, effects);
-            stack.setHoverName(new TextComponent("Compound Potion"));
-            player.setItemInHand(hand, stack);
+        } else if (!tank.isEmpty()){
+            if (player.getItemInHand(hand).is(Items.GLASS_BOTTLE)) {
+                ItemStack stack = Items.POTION.getDefaultInstance();
+                List<MobEffectInstance> effects = new ArrayList<>();
+                for (PotionPathData data : containedPotions) {
+                    effects.addAll(data.effects);
+                }
+                PotionUtils.setCustomEffects(stack, effects);
+                stack.setHoverName(new TextComponent("Compound Potion"));
+                tank.drain(100, IFluidHandler.FluidAction.EXECUTE);
+                player.setItemInHand(hand, stack);
+                return InteractionResult.SUCCESS;
+            }
+            if (player.getItemInHand(hand).is(Items.ACACIA_BOAT)) {
+                expanded = !expanded;
+                if (expanded) {
+                    visionArea = 1000;
+                } else {
+                    visionArea = 3;
+                }
+                BlockHelper.updateAndNotifyState(level, worldPosition);
+                return InteractionResult.SUCCESS;
+            }
+
+            inventory.interact(level, player, hand);
             return InteractionResult.SUCCESS;
         }
-        inventory.interact(level, player, hand);
-        return InteractionResult.SUCCESS;
+        return InteractionResult.FAIL;
     }
 
     @Override
     public void onPlace(LivingEntity placer, ItemStack stack) {
-        unmodifiedPotionMap.copy(PotionPathDataListener.potionMap);
+        unmodifiedPotionMap = PotionPathDataListener.potionMap.clone();
+        mutablePotionMap = unmodifiedPotionMap.clone();
         super.onPlace(placer, stack);
     }
 
     @Override
     public void tick() {
         super.tick();
-        if(!unmodifiedPotionMap.map.equals(PotionPathDataListener.potionMap.map)){
-            unmodifiedPotionMap.copy(PotionPathDataListener.potionMap);
-            mutablePotionMap = unmodifiedPotionMap;
-            for (Pair<Integer, IntFunction<PotionMapInstruction>> instruction : instructions) {
-                mutablePotionMap = instruction.getSecond().apply(instruction.getFirst()).instruction.apply(mutablePotionMap);
-            }
-        }
         if (progress < 4) {
             progress++;
         }
         if (!level.isClientSide) {
             dissolveItem(inventory.getStackInSlot(0), 0);
+            if (unmodifiedPotionMap.map.equals(PotionPathDataListener.potionMap.map)) {
+                unmodifiedPotionMap = PotionPathDataListener.potionMap.clone();
+                mutablePotionMap = unmodifiedPotionMap.clone();
+                for (Pair<Integer, IntFunction<PotionMapInstruction>> instruction : instructions) {
+                    instruction.getSecond().apply(instruction.getFirst()).instruction.apply(mutablePotionMap);
+                }
+                BlockHelper.updateAndNotifyState(level, worldPosition);
+            }
         }
         previousVisualPercentage = visualPercentage;
         visualPercentage = Mth.lerp(0.5f, visualPercentage, progress / 4);
@@ -146,8 +187,12 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
                             progress = 0;
                         }
                     }
-                    PotionMapInstructions.instructions.get(path.getInstruction()).apply(path.getPower()).instruction.apply(mutablePotionMap);
-                    instructions.add(Pair.of(path.getPower(), PotionMapInstructions.instructions.get(path.getInstruction())));
+                    if (!Objects.equals(path.getInstruction(), "none")) {
+                        PotionMapInstructions.instructions.get(path.getInstruction()).apply(path.getPower()).instruction.apply(mutablePotionMap);
+                        instructions.add(Pair.of(path.getPower(), PotionMapInstructions.instructions.get(path.getInstruction())));
+                        //System.out.println(stack.getDisplayName().getString() + " " + path.getInstruction() + " " + path.getPower());
+                        BlockHelper.updateAndNotifyState(level, worldPosition);
+                    }
                 }
             }
         }
@@ -171,12 +216,12 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
         for (Vec3 node : passPoints) {
             PotionPathData potion = mutablePotionMap.isInRadius(node);
             if (potion != null) {
-                if(!containedPotions.contains(potion)) {
+                if (!containedPotions.contains(potion)) {
                     containedPotions.add(potion);
                 }
                 for (MobEffectInstance ef : potion.effects) {
                     String effName = (new TranslatableComponent(ef.getDescriptionId())).getString() + ", Strength: " + ef.getAmplifier() + ", Duration: " + ef.getDuration();
-                    if(!containedPotionNames.contains(effName)) {
+                    if (!containedPotionNames.contains(effName)) {
                         containedPotionNames.add(effName);
                     }
                 }
@@ -209,10 +254,10 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
         if (!instructions.isEmpty()) {
             ListTag list = new ListTag();
             for (Pair<Integer, IntFunction<PotionMapInstruction>> p : instructions) {
-                for (String rl : PotionMapInstructions.instructions.keySet()){
-                    if(PotionMapInstructions.instructions.get(rl).equals(p.getSecond())){
+                for (String rl : PotionMapInstructions.instructions.keySet()) {
+                    if (PotionMapInstructions.instructions.get(rl).equals(p.getSecond())) {
                         CompoundTag tag = new CompoundTag();
-                        tag.putString("instruction", rl.toString());
+                        tag.putString("instruction", rl);
                         tag.putInt("power", p.getFirst());
                         list.add(tag);
                     }
@@ -220,6 +265,9 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
             }
             compound.put("instructions", list);
         }
+        compound.putBoolean("expanded", expanded);
+        compound.putInt("visionArea", visionArea);
+        compound.put("tank", tank.writeToNBT(new CompoundTag()));
         super.saveAdditional(compound);
     }
 
@@ -253,6 +301,17 @@ public class CauldronBlockEntity extends ItemHolderBlockEntity {
                 instructions.add(new Pair<>(tag.getInt("power"), PotionMapInstructions.instructions.get(tag.getString("instruction"))));
             }
         }
+        expanded = compound.getBoolean("expanded");
+        visionArea = compound.getInt("visionArea");
+        tank.readFromNBT(compound.getCompound("tank"));
         super.load(compound);
+    }
+
+    @NotNull
+    @Override
+    public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, Direction side) {
+        if(cap == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY)
+            return holder.cast();
+        return super.getCapability(cap, side);
     }
 }

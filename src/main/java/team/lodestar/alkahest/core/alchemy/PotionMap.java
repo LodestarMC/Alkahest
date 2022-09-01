@@ -7,8 +7,11 @@ import net.minecraft.world.phys.Vec3;
 import team.lodestar.alkahest.core.path.PotionPathData;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class PotionMap {
     public List<PotionPathData> map;
@@ -23,8 +26,40 @@ public class PotionMap {
         return map;
     }
 
+    //
+    public Vec3 getLowestPoint(){
+        Vec3 lowest = Vec3.ZERO;
+        for(PotionPathData data : map){
+            if(data.location.y() < lowest.y()){
+                lowest = data.location;
+            }
+        }
+        return lowest;
+    }
+
+    public boolean deepEquals(PotionMap map){
+        for(int i = 0; i < this.map.size(); i++){
+            if(!this.map.get(i).equals(map.getMap().get(i))){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static <T> boolean lazyEquals(List<T> list1, List<T> list2){
+        return new TreeSet<>(new HashSet<>(list1)).equals(new TreeSet<>(new HashSet<>(list2)));
+    }
+
     public void copy(PotionMap map){
         this.map = new ArrayList<>(map.getMap());
+    }
+
+    public PotionMap clone(){
+        List<PotionPathData> newMap = new ArrayList<>();
+        for(PotionPathData data : map){
+            newMap.add(data.clone());
+        }
+        return new PotionMap(newMap);
     }
 
     public boolean equals(PotionMap map){

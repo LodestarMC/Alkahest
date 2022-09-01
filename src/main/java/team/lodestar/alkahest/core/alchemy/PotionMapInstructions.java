@@ -21,7 +21,7 @@ public class PotionMapInstructions {
             for(int c = 0; c < count; c++){
                 int index = random.nextInt(map.getMap().size()-1);
                 for (int i = 0; i < map.getMap().get(index).effects.size(); i++) {
-                    System.out.println(Arrays.toString(map.getMap().get(index).effects.toArray()));
+                    System.out.println("Flipping " + map.getMap().get(index).effects.get(i).toString());
                     if (map.getMap().get(index).effects.get(i).getEffect().getCategory() == MobEffectCategory.HARMFUL) {
                         map.getMap().get(index).effects.get(i).effect = positiveEffects.get(random.nextInt(positiveEffects.size()-1));
                         c++;
